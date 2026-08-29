@@ -618,6 +618,7 @@ function initDriveTokenClient(){
   driveTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: DRIVE_SCOPE,
+    hint: 'latelier.armado@gmail.com',
     callback: async (tokenResponse) => {
       if(tokenResponse.error){
         setDriveStatus('Connection failed. Try again.');
@@ -664,6 +665,7 @@ function attemptSilentDriveReconnect(){
   const silentClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: DRIVE_SCOPE,
+    hint: 'latelier.armado@gmail.com',
     callback: async (tokenResponse) => {
       if(tokenResponse.error){
         setDriveStatus('Not connected — click below to reconnect');
@@ -692,6 +694,7 @@ async function ensureDriveToken(){
     google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: DRIVE_SCOPE,
+      hint: 'latelier.armado@gmail.com',
       callback: (tokenResponse)=>{
         if(tokenResponse.error){ resolve(false); return; }
         driveAccessToken = tokenResponse.access_token;
