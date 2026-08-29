@@ -43,6 +43,7 @@
     width:220px; flex-shrink:0;
     background:var(--pine); color:var(--paper);
     padding:24px 16px; position:sticky; top:0; height:100vh;
+    overflow-y:auto;
   }
   .brand{
     font-family:Georgia, 'Times New Roman', serif; font-size:21px; font-weight:600;
@@ -545,6 +546,7 @@ async function loadAll(){
   document.getElementById('biz-name').value = settings.bizName || '';
   document.getElementById('biz-contact').value = settings.bizContact || '';
   renderAll();
+  attemptSilentDriveReconnect();
 }
 
 async function loadKey(key, fallback){
@@ -639,6 +641,49 @@ function connectDrive(){
   driveTokenClient.requestAccessToken();
 }
 
+function rememberDriveConnection(){
+  try{ localStorage.setItem('crm-drive-meta', JSON.stringify({ wasConnected: true, fileId: driveFileId })); }catch(e){}
+}
+
+function getRememberedDriveMeta(){
+  try{
+    const raw = localStorage.getItem('crm-drive-meta');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function attemptSilentDriveReconnect(){
+  const meta = getRememberedDriveMeta();
+  if(!meta || !meta.wasConnected || typeof google === 'undefined'){
+    if(!meta || !meta.wasConnected) return;
+    // google library not ready yet — try again shortly
+    setTimeout(attemptSilentDriveReconnect, 400);
+    return;
+  }
+  setDriveStatus('Reconnecting…');
+  const silentClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (tokenResponse) => {
+      if(tokenResponse.error){
+        setDriveStatus('Not connected — click below to reconnect');
+        return;
+      }
+      driveAccessToken = tokenResponse.access_token;
+      driveTokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+      driveFileId = meta.fileId || null;
+      document.getElementById('drive-connect-btn').textContent = 'Google Drive: Connected';
+      if(!driveFileId){
+        await onDriveConnected();
+      } else {
+        setDriveStatus('Connected — synced just now');
+        pushToDrive();
+      }
+    }
+  });
+  silentClient.requestAccessToken({ prompt: '' });
+}
+
 async function ensureDriveToken(){
   if(driveAccessToken && Date.now() < driveTokenExpiry - 30000) return true;
   return new Promise((resolve)=>{
@@ -692,6 +737,7 @@ function buildSyncBundle(){
 async function onDriveConnected(){
   try{
     driveFileId = await findOrCreateDriveFile();
+    rememberDriveConnection();
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
       headers: { 'Authorization': `Bearer ${driveAccessToken}` }
     });
