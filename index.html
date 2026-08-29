@@ -706,7 +706,8 @@ async function ensureDriveToken(){
 }
 
 async function findOrCreateDriveFile(){
-  const query = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const escapedFilename = DRIVE_FILENAME.replace(/'/g, "\\'");
+  const query = encodeURIComponent(`name='${escapedFilename}' and trashed=false`);
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name)`, {
     headers: { 'Authorization': `Bearer ${driveAccessToken}` }
   });
