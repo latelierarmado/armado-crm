@@ -708,14 +708,21 @@ async function ensureDriveToken(){
 async function findOrCreateDriveFile(){
   const escapedFilename = DRIVE_FILENAME.replace(/'/g, "\\'");
   const query = encodeURIComponent(`name='${escapedFilename}' and trashed=false`);
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name)`, {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name,modifiedTime)`, {
     headers: { 'Authorization': `Bearer ${driveAccessToken}` }
   });
   const data = await res.json();
-  if(data.files && data.files.length){
-    return data.files[0].id;
+  if(data.error){
+    throw new Error('Search failed: ' + (data.error.message || JSON.stringify(data.error)));
   }
-  // create a new file seeded with current local data
+  if(data.files && data.files.length){
+    if(data.files.length > 1){
+      console.warn('Multiple Drive files matched — using the most recently modified one.', data.files);
+      data.files.sort((a,b)=> new Date(b.modifiedTime) - new Date(a.modifiedTime));
+    }
+    return { id: data.files[0].id, isNew: false };
+  }
+  // no existing file found — create a new one seeded with current local data
   const bundle = buildSyncBundle();
   const boundary = 'armado_boundary';
   const metadata = { name: DRIVE_FILENAME, mimeType: 'application/json' };
@@ -731,7 +738,10 @@ async function findOrCreateDriveFile(){
     body
   });
   const created = await createRes.json();
-  return created.id;
+  if(created.error){
+    throw new Error('Create failed: ' + (created.error.message || JSON.stringify(created.error)));
+  }
+  return { id: created.id, isNew: true };
 }
 
 function buildSyncBundle(){
@@ -740,17 +750,22 @@ function buildSyncBundle(){
 
 async function onDriveConnected(){
   try{
-    driveFileId = await findOrCreateDriveFile();
+    const result = await findOrCreateDriveFile();
+    driveFileId = result.id;
     rememberDriveConnection();
+    if(result.isNew){
+      setDriveStatus('Connected — no existing file found, created a new one');
+      return;
+    }
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
       headers: { 'Authorization': `Bearer ${driveAccessToken}` }
     });
     if(res.ok){
       const remote = await res.json();
-      contacts = remote.contacts || contacts;
-      invoices = remote.invoices || invoices;
-      payments = remote.payments || payments;
-      weightEntries = remote.weightEntries || weightEntries;
+      contacts = remote.contacts || [];
+      invoices = remote.invoices || [];
+      payments = remote.payments || [];
+      weightEntries = remote.weightEntries || [];
       settings = remote.settings || settings;
       await persist('crm-contacts', contacts);
       await persist('crm-invoices', invoices);
@@ -760,12 +775,15 @@ async function onDriveConnected(){
       document.getElementById('biz-name').value = settings.bizName || '';
       document.getElementById('biz-contact').value = settings.bizContact || '';
       renderAll();
-      setDriveStatus('Connected — synced just now');
+      setDriveStatus('Connected — loaded ' + contacts.length + ' contacts, ' + invoices.length + ' invoices from Drive');
     } else {
-      setDriveStatus('Connected — file created');
+      const errBody = await res.text();
+      setDriveStatus('Connected, but could not read the file (' + res.status + ')');
+      console.error('Drive file read failed:', res.status, errBody);
     }
   }catch(e){
-    setDriveStatus('Connected, but sync failed. Retrying on next save.');
+    setDriveStatus('Error: ' + e.message);
+    console.error('Drive connect error:', e);
   }
 }
 
