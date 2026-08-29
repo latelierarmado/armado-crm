@@ -232,6 +232,7 @@
     .tag{ font-size:8px; padding:1px 6px; }
   }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div id="lock-screen" style="position:fixed; inset:0; background:var(--pine); display:flex; align-items:center; justify-content:center; z-index:200; flex-direction:column; padding:20px;">
@@ -274,6 +275,8 @@
       </label>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="lockApp()">Lock now</button>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="changePin()">Change PIN</button>
+      <button class="btn-ghost btn btn-sm" id="drive-connect-btn" style="color:var(--paper); border-color:#6B4444;" onclick="connectDrive()">Connect Google Drive</button>
+      <p id="drive-status" style="font-size:10.5px; color:#C9CABB; margin:2px 0 0 2px;">Not connected</p>
     </div>
   </div>
 
@@ -578,6 +581,7 @@ async function persist(key, data){
     try{
       await window.storage.set(key, JSON.stringify(data), false);
       setSaveLabel('saved');
+      pushToDrive();
       return;
     }catch(e){
       /* fall through to localStorage below */
@@ -586,9 +590,156 @@ async function persist(key, data){
   try{
     localStorage.setItem(key, JSON.stringify(data));
     setSaveLabel('saved');
+    pushToDrive();
   }catch(e){
     setSaveLabel('save failed');
   }
+}
+
+/* ---------- Google Drive sync ---------- */
+const GOOGLE_CLIENT_ID = '404885039070-u9h836chosta83l0ed3ua87ep673138q.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILENAME = "L'Atelier Armado CRM Data.json";
+let driveTokenClient = null;
+let driveAccessToken = null;
+let driveTokenExpiry = 0;
+let driveFileId = null;
+let drivePushTimer = null;
+
+function setDriveStatus(text){
+  const el = document.getElementById('drive-status');
+  if(el) el.textContent = text;
+}
+
+function initDriveTokenClient(){
+  if(driveTokenClient || typeof google === 'undefined') return;
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (tokenResponse) => {
+      if(tokenResponse.error){
+        setDriveStatus('Connection failed. Try again.');
+        return;
+      }
+      driveAccessToken = tokenResponse.access_token;
+      driveTokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+      document.getElementById('drive-connect-btn').textContent = 'Google Drive: Connected';
+      setDriveStatus('Syncing…');
+      await onDriveConnected();
+    }
+  });
+}
+
+function connectDrive(){
+  initDriveTokenClient();
+  if(!driveTokenClient){
+    notify('Google sign-in is still loading. Try again in a moment.');
+    return;
+  }
+  driveTokenClient.requestAccessToken();
+}
+
+async function ensureDriveToken(){
+  if(driveAccessToken && Date.now() < driveTokenExpiry - 30000) return true;
+  return new Promise((resolve)=>{
+    initDriveTokenClient();
+    if(!driveTokenClient){ resolve(false); return; }
+    google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: (tokenResponse)=>{
+        if(tokenResponse.error){ resolve(false); return; }
+        driveAccessToken = tokenResponse.access_token;
+        driveTokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+        resolve(true);
+      }
+    }).requestAccessToken({ prompt: '' });
+  });
+}
+
+async function findOrCreateDriveFile(){
+  const query = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name)`, {
+    headers: { 'Authorization': `Bearer ${driveAccessToken}` }
+  });
+  const data = await res.json();
+  if(data.files && data.files.length){
+    return data.files[0].id;
+  }
+  // create a new file seeded with current local data
+  const bundle = buildSyncBundle();
+  const boundary = 'armado_boundary';
+  const metadata = { name: DRIVE_FILENAME, mimeType: 'application/json' };
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(bundle)}\r\n--${boundary}--`;
+  const createRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${driveAccessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`
+    },
+    body
+  });
+  const created = await createRes.json();
+  return created.id;
+}
+
+function buildSyncBundle(){
+  return { contacts, invoices, payments, weightEntries, settings, syncedAt: new Date().toISOString() };
+}
+
+async function onDriveConnected(){
+  try{
+    driveFileId = await findOrCreateDriveFile();
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { 'Authorization': `Bearer ${driveAccessToken}` }
+    });
+    if(res.ok){
+      const remote = await res.json();
+      contacts = remote.contacts || contacts;
+      invoices = remote.invoices || invoices;
+      payments = remote.payments || payments;
+      weightEntries = remote.weightEntries || weightEntries;
+      settings = remote.settings || settings;
+      await persist('crm-contacts', contacts);
+      await persist('crm-invoices', invoices);
+      await persist('crm-payments', payments);
+      await persist('crm-weight-entries', weightEntries);
+      await persist('crm-settings', settings);
+      document.getElementById('biz-name').value = settings.bizName || '';
+      document.getElementById('biz-contact').value = settings.bizContact || '';
+      renderAll();
+      setDriveStatus('Connected — synced just now');
+    } else {
+      setDriveStatus('Connected — file created');
+    }
+  }catch(e){
+    setDriveStatus('Connected, but sync failed. Retrying on next save.');
+  }
+}
+
+function pushToDrive(){
+  if(!driveAccessToken || !driveFileId) return;
+  clearTimeout(drivePushTimer);
+  drivePushTimer = setTimeout(async ()=>{
+    const ok = await ensureDriveToken();
+    if(!ok){ setDriveStatus('Reconnect needed — click Connect Google Drive'); return; }
+    try{
+      const bundle = buildSyncBundle();
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${driveAccessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bundle)
+      });
+      setDriveStatus('Connected — synced ' + new Date().toLocaleTimeString());
+    }catch(e){
+      setDriveStatus('Connected, but last sync failed.');
+    }
+  }, 800);
 }
 
 function exportData(){
