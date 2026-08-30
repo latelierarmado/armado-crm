@@ -787,27 +787,79 @@ async function onDriveConnected(){
   }
 }
 
+let pendingDriveSync = false;
+let driveRetryInterval = null;
+
 function pushToDrive(){
-  if(!driveAccessToken || !driveFileId) return;
+  if(!driveFileId){
+    const meta = getRememberedDriveMeta();
+    if(meta && meta.fileId){ driveFileId = meta.fileId; } else { return; }
+  }
+  pendingDriveSync = true;
   clearTimeout(drivePushTimer);
-  drivePushTimer = setTimeout(async ()=>{
-    const ok = await ensureDriveToken();
-    if(!ok){ setDriveStatus('Reconnect needed — click Connect Google Drive'); return; }
-    try{
-      const bundle = buildSyncBundle();
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${driveAccessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bundle)
-      });
+  drivePushTimer = setTimeout(attemptDrivePush, 800);
+}
+
+async function attemptDrivePush(){
+  if(!driveFileId) return;
+  const ok = await ensureDriveToken();
+  if(!ok){ markDriveNeedsReconnect(); return; }
+  try{
+    const bundle = buildSyncBundle();
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${driveAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bundle)
+    });
+    if(res.ok){
+      pendingDriveSync = false;
+      clearDriveNeedsReconnect();
       setDriveStatus('Connected — synced ' + new Date().toLocaleTimeString());
-    }catch(e){
-      setDriveStatus('Connected, but last sync failed.');
+    } else {
+      markDriveNeedsReconnect();
     }
-  }, 800);
+  }catch(e){
+    markDriveNeedsReconnect();
+  }
+}
+
+function markDriveNeedsReconnect(){
+  pendingDriveSync = true;
+  const btn = document.getElementById('drive-connect-btn');
+  if(btn){
+    btn.textContent = '⚠ Reconnect Google Drive';
+    btn.style.borderColor = '#E0A98C';
+    btn.style.color = '#FBEAE0';
+    btn.style.fontWeight = '700';
+  }
+  setDriveStatus('Not synced yet — click Reconnect above');
+  startDriveRetryLoop();
+}
+
+function clearDriveNeedsReconnect(){
+  const btn = document.getElementById('drive-connect-btn');
+  if(btn){
+    btn.textContent = 'Google Drive: Connected';
+    btn.style.borderColor = '#6B4444';
+    btn.style.color = 'var(--paper)';
+    btn.style.fontWeight = '500';
+  }
+  stopDriveRetryLoop();
+}
+
+function startDriveRetryLoop(){
+  if(driveRetryInterval) return;
+  driveRetryInterval = setInterval(()=>{
+    if(!pendingDriveSync){ stopDriveRetryLoop(); return; }
+    attemptDrivePush();
+  }, 30000);
+}
+
+function stopDriveRetryLoop(){
+  if(driveRetryInterval){ clearInterval(driveRetryInterval); driveRetryInterval = null; }
 }
 
 function exportData(){
