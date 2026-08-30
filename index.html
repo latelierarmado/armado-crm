@@ -277,6 +277,7 @@
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="lockApp()">Lock now</button>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="changePin()">Change PIN</button>
       <button class="btn-ghost btn btn-sm" id="drive-connect-btn" style="color:var(--paper); border-color:#6B4444;" onclick="connectDrive()">Connect Google Drive</button>
+      <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444; font-size:10.5px;" onclick="disconnectDrive()">Forget Drive connection</button>
       <p id="drive-status" style="font-size:10.5px; color:#C9CABB; margin:2px 0 0 2px;">Not connected</p>
     </div>
   </div>
@@ -644,6 +645,26 @@ function connectDrive(){
 
 function rememberDriveConnection(){
   try{ localStorage.setItem('crm-drive-meta', JSON.stringify({ wasConnected: true, fileId: driveFileId })); }catch(e){}
+}
+
+function disconnectDrive(){
+  confirmAction('Forget this device\'s Google Drive connection? You\'ll need to click Connect again, and it will re-search Drive fresh for your file.', ()=>{
+    try{ localStorage.removeItem('crm-drive-meta'); }catch(e){}
+    driveFileId = null;
+    driveAccessToken = null;
+    driveTokenExpiry = 0;
+    pendingDriveSync = false;
+    stopDriveRetryLoop();
+    const btn = document.getElementById('drive-connect-btn');
+    if(btn){
+      btn.textContent = 'Connect Google Drive';
+      btn.style.borderColor = '#6B4444';
+      btn.style.color = 'var(--paper)';
+      btn.style.fontWeight = '500';
+    }
+    setDriveStatus('Not connected');
+    notify('Forgotten. Click "Connect Google Drive" to do a fresh connect.');
+  });
 }
 
 function getRememberedDriveMeta(){
