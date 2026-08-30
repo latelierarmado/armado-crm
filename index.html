@@ -578,25 +578,26 @@ function saveSettings(){
   if(currentInvoiceId) renderInvoiceDoc(currentInvoiceId);
 }
 
-async function persist(key, data){
-  setSaveLabel('saving...');
+async function writeLocalOnly(key, data){
   if(typeof window.storage !== 'undefined'){
     try{
       await window.storage.set(key, JSON.stringify(data), false);
-      setSaveLabel('saved');
-      pushToDrive();
-      return;
-    }catch(e){
-      /* fall through to localStorage below */
-    }
+      return true;
+    }catch(e){ /* fall through */ }
   }
   try{
     localStorage.setItem(key, JSON.stringify(data));
-    setSaveLabel('saved');
-    pushToDrive();
+    return true;
   }catch(e){
-    setSaveLabel('save failed');
+    return false;
   }
+}
+
+async function persist(key, data){
+  setSaveLabel('saving...');
+  const ok = await writeLocalOnly(key, data);
+  setSaveLabel(ok ? 'saved' : 'save failed');
+  if(ok) pushToDrive();
 }
 
 /* ---------- Google Drive sync ---------- */
@@ -655,6 +656,7 @@ function disconnectDrive(){
     driveTokenExpiry = 0;
     pendingDriveSync = false;
     stopDriveRetryLoop();
+    stopDrivePullPolling();
     const btn = document.getElementById('drive-connect-btn');
     if(btn){
       btn.textContent = 'Connect Google Drive';
@@ -702,6 +704,7 @@ function attemptSilentDriveReconnect(){
         setDriveStatus('Connected — synced just now');
         pushToDrive();
       }
+      startDrivePullPolling();
     }
   });
   silentClient.requestAccessToken({ prompt: '' });
@@ -788,15 +791,17 @@ async function onDriveConnected(){
       payments = remote.payments || [];
       weightEntries = remote.weightEntries || [];
       settings = remote.settings || settings;
-      await persist('crm-contacts', contacts);
-      await persist('crm-invoices', invoices);
-      await persist('crm-payments', payments);
-      await persist('crm-weight-entries', weightEntries);
-      await persist('crm-settings', settings);
+      lastKnownSyncedAt = remote.syncedAt || new Date().toISOString();
+      await writeLocalOnly('crm-contacts', contacts);
+      await writeLocalOnly('crm-invoices', invoices);
+      await writeLocalOnly('crm-payments', payments);
+      await writeLocalOnly('crm-weight-entries', weightEntries);
+      await writeLocalOnly('crm-settings', settings);
       document.getElementById('biz-name').value = settings.bizName || '';
       document.getElementById('biz-contact').value = settings.bizContact || '';
       renderAll();
       setDriveStatus('Connected — loaded ' + contacts.length + ' contacts, ' + invoices.length + ' invoices from Drive');
+      startDrivePullPolling();
     } else {
       const errBody = await res.text();
       setDriveStatus('Connected, but could not read the file (' + res.status + ')');
@@ -809,6 +814,46 @@ async function onDriveConnected(){
 }
 
 let pendingDriveSync = false;
+let drivePullInterval = null;
+let lastKnownSyncedAt = null;
+
+function startDrivePullPolling(){
+  if(drivePullInterval) return;
+  drivePullInterval = setInterval(pullFromDriveIfNewer, 45000);
+}
+
+function stopDrivePullPolling(){
+  if(drivePullInterval){ clearInterval(drivePullInterval); drivePullInterval = null; }
+}
+
+async function pullFromDriveIfNewer(){
+  if(!driveFileId || pendingDriveSync) return; // don't clobber unsaved local changes
+  const ok = await ensureDriveToken();
+  if(!ok) return;
+  try{
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { 'Authorization': `Bearer ${driveAccessToken}` }
+    });
+    if(!res.ok) return;
+    const remote = await res.json();
+    if(remote.syncedAt && lastKnownSyncedAt && new Date(remote.syncedAt) <= new Date(lastKnownSyncedAt)) return;
+    contacts = remote.contacts || [];
+    invoices = remote.invoices || [];
+    payments = remote.payments || [];
+    weightEntries = remote.weightEntries || [];
+    settings = remote.settings || settings;
+    lastKnownSyncedAt = remote.syncedAt || new Date().toISOString();
+    await writeLocalOnly('crm-contacts', contacts);
+    await writeLocalOnly('crm-invoices', invoices);
+    await writeLocalOnly('crm-payments', payments);
+    await writeLocalOnly('crm-weight-entries', weightEntries);
+    await writeLocalOnly('crm-settings', settings);
+    document.getElementById('biz-name').value = settings.bizName || '';
+    document.getElementById('biz-contact').value = settings.bizContact || '';
+    renderAll();
+    setDriveStatus('Connected — updated from another device just now');
+  }catch(e){ /* silent — will retry next interval */ }
+}
 let driveRetryInterval = null;
 
 function pushToDrive(){
@@ -837,6 +882,7 @@ async function attemptDrivePush(){
     });
     if(res.ok){
       pendingDriveSync = false;
+      lastKnownSyncedAt = bundle.syncedAt;
       clearDriveNeedsReconnect();
       setDriveStatus('Connected — synced ' + new Date().toLocaleTimeString());
     } else {
