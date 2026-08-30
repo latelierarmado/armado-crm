@@ -649,7 +649,12 @@ function rememberDriveConnection(){
 }
 
 function disconnectDrive(){
-  confirmAction('Forget this device\'s Google Drive connection? You\'ll need to click Connect again, and it will re-search Drive fresh for your file.', ()=>{
+  confirmAction('Forget this device\'s Google Drive connection? You\'ll need to click Connect again, and it will re-search Drive fresh for your file.', async ()=>{
+    if(pendingDriveSync){
+      setDriveStatus('Finishing last save before disconnecting…');
+      clearTimeout(drivePushTimer);
+      await attemptDrivePush();
+    }
     try{ localStorage.removeItem('crm-drive-meta'); }catch(e){}
     driveFileId = null;
     driveAccessToken = null;
@@ -701,8 +706,8 @@ function attemptSilentDriveReconnect(){
       if(!driveFileId){
         await onDriveConnected();
       } else {
-        setDriveStatus('Connected — synced just now');
-        pushToDrive();
+        await pullFromDriveIfNewer();
+        setDriveStatus('Connected — up to date');
       }
       startDrivePullPolling();
     }
