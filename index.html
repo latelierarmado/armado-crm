@@ -537,7 +537,8 @@
   <div class="modal modal-wide" style="max-width:560px; background:var(--paper);">
     <div class="no-print" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px;">
       <button class="btn-ghost btn" onclick="closeModal('receipt-view-overlay')">Close</button>
-      <button class="btn" onclick="window.print()">Print / save as PDF</button>
+      <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
+        <button class="btn" onclick="window.print()">Print / save as PDF</button>
     </div>
     <div class="invoice-doc" id="receipt-doc" style="max-width:none;"></div>
   </div>
@@ -552,6 +553,7 @@
       </div>
       <div style="display:flex; gap:8px; align-items:flex-end;">
         <button class="btn-ghost btn" onclick="closeModal('invoice-view-overlay')">Close</button>
+        <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
         <button class="btn" onclick="window.print()">Print / save as PDF</button>
       </div>
     </div>
@@ -1876,6 +1878,18 @@ async function changePin(){
 }
 
 checkLockState();
+
+const PRINT_SIZES={ 'hagaki':['148mm 100mm',88],'hagaki-p':['100mm 148mm',136],'a6':['148mm 105mm',93],'a6-p':['105mm 148mm',136],'a5':['210mm 148mm',136] };
+function setPrintSize(v){
+  if(!PRINT_SIZES[v]) v='hagaki';
+  let st=document.getElementById('print-size-style');
+  if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
+  const [size,h]=PRINT_SIZES[v];
+  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } .invoice-doc{ max-height:'+h+'mm !important; } }';
+  document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
+  try{ localStorage.setItem('crm-print-size',v); }catch(e){}
+}
+(function(){ let v='hagaki'; try{ v=localStorage.getItem('crm-print-size')||'hagaki'; }catch(e){} setPrintSize(v); })();
 </script>
 </body>
 </html>
