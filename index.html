@@ -207,20 +207,20 @@
   .invoice-doc td{ font-size:13px; }
   .invoice-doc .num-col{ text-align:right; }
   @media print{
-    @page{ size: 100mm 148mm; margin: 6mm; }
+    @page{ size: 148mm 100mm; margin: 6mm; }
     .sidebar, .no-print{ display:none !important; }
     html, body{ height:auto !important; overflow:visible !important; margin:0 !important; }
     body > *:not(.overlay){ display:none !important; }
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; max-height:136mm; overflow:hidden; }
+    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; max-height:88mm; overflow:hidden; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
       border:none; border-radius:0; padding:0; max-width:none; width:100%;
     }
-    .invoice-doc-head{ flex-direction:column; gap:8px; margin-bottom:14px; }
+    .invoice-doc-head{ flex-direction:row; justify-content:space-between; gap:8px; margin-bottom:10px; }
     .invoice-doc-head > div:first-child{ gap:8px; }
     .invoice-doc h1{ font-size:16px; margin:0 0 2px; }
     .invoice-biz{ font-size:9px; line-height:1.35; }
@@ -232,6 +232,7 @@
     .invoice-doc table{ font-size:8.5px; }
     .invoice-doc th{ padding:4px 3px; font-size:8px; }
     .invoice-doc td{ padding:4px 3px; font-size:8.5px; }
+    .invoice-doc td[colspan]{ font-size:8.5px !important; }
     .totals-box{ margin-top:8px; padding-top:6px; }
     .totals-row{ font-size:9px; padding:2px 0; }
     .totals-row.grand{ font-size:11px; }
