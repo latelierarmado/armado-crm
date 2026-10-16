@@ -207,8 +207,14 @@
   .invoice-doc td{ font-size:13px; }
   .invoice-doc .num-col{ text-align:right; }
   @media print{
-    @page{ size: A6; margin: 6mm; }
+    @page{ size: 100mm 148mm; margin: 6mm; }
     .sidebar, .no-print{ display:none !important; }
+    html, body{ height:auto !important; overflow:visible !important; margin:0 !important; }
+    body > *:not(.overlay){ display:none !important; }
+    .overlay:not(.show){ display:none !important; }
+    .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
+    .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
+    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; max-height:136mm; overflow:hidden; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
