@@ -398,7 +398,7 @@
 
     <label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:14px 0 6px; font-weight:500;">Line items</label>
     <table class="line-items">
-      <thead><tr><th class="li-desc">Description</th><th class="li-num">Color</th><th class="li-num">Qty</th><th class="li-weight">Labor</th><th class="li-remove"></th></tr></thead>
+      <thead><tr><th class="li-desc">Photo</th><th class="li-num">Color</th><th class="li-num">Qty</th><th class="li-weight">Labor</th><th class="li-remove"></th></tr></thead>
       <tbody id="invoice-items"></tbody>
     </table>
     <button class="btn-ghost btn btn-sm" onclick="addInvoiceRow()">+ Add line</button>
@@ -1439,7 +1439,14 @@ function addInvoiceRow(item){
   tr.id = rowId;
   tr.className = 'li-main-row';
   tr.innerHTML = `
-    <td class="li-desc"><input class="li-input-desc" value="${escapeHtml(item?.desc||'')}" placeholder="Item or service" oninput="updateInvoiceTotals()"></td>
+    <td class="li-desc">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img class="li-photo-thumb" style="display:none; width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--line);">
+        <button type="button" class="btn li-photo-btn" onclick="document.getElementById('${rowId}_file').click()" style="padding:8px 12px; font-size:13px;">📷 Photo</button>
+        <button type="button" class="icon-btn li-photo-clear" style="display:none;" title="Remove photo" onclick="setRowPhoto('${rowId}', '')">✕</button>
+        <input type="file" id="${rowId}_file" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoFile('${rowId}', this)">
+      </div>
+    </td>
     <td class="li-num">
       <select class="li-input-color" style="width:100%; font-size:13px; padding:6px 4px;">
         <option value="YG" ${(item?.color ?? 'YG') === 'YG' ? 'selected' : ''}>YG</option>
@@ -1483,8 +1490,40 @@ function addInvoiceRow(item){
 
   tbody.appendChild(tr);
   tbody.appendChild(detailTr);
+  setRowPhoto(rowId, item?.photo || '');
   updateRowCalc(rowId);
   updateInvoiceTotals();
+}
+
+function setRowPhoto(rowId, dataUrl){
+  const tr = document.getElementById(rowId);
+  if(!tr) return;
+  tr.dataset.photo = dataUrl || '';
+  const img = tr.querySelector('.li-photo-thumb');
+  img.style.display = dataUrl ? 'block' : 'none';
+  if(dataUrl) img.src = dataUrl;
+  tr.querySelector('.li-photo-clear').style.display = dataUrl ? 'inline-flex' : 'none';
+  tr.querySelector('.li-photo-btn').textContent = dataUrl ? '📷 Retake' : '📷 Photo';
+}
+
+function handlePhotoFile(rowId, input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const max = 640;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      setRowPhoto(rowId, c.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 function updateRowCalc(rowId){
@@ -1503,7 +1542,7 @@ function collectInvoiceItems(){
     const detailTr = document.getElementById(tr.id + '_detail');
     return {
       id: tr.id,
-      desc: tr.querySelector('.li-input-desc').value,
+      photo: tr.dataset.photo || '',
       color: tr.querySelector('.li-input-color').value,
       qty: Number(tr.querySelector('.li-input-qty').value || 0),
       weight: detailTr.querySelector('.li-input-weight').value ? Number(detailTr.querySelector('.li-input-weight').value) : null,
@@ -1550,7 +1589,7 @@ function openInvoiceModal(id){
 
 function saveInvoice(){
   const id = document.getElementById('invoice-id').value;
-  const items = collectInvoiceItems().filter(li=>li.desc.trim());
+  const items = collectInvoiceItems().filter(li=>li.qty>0 || li.photo || li.weight!=null || li.labor!=null);
   if(!items.length){ notify('Add at least one line item.'); return; }
   const data = {
     id: id || uid(),
@@ -1616,11 +1655,11 @@ function renderInvoiceDoc(id){
       </div>
     </div>
     <table>
-      <thead><tr><th>Description</th><th class="num-col">Color</th><th class="num-col">Qty</th><th class="num-col">Labor</th></tr></thead>
+      <thead><tr><th>Item</th><th class="num-col">Color</th><th class="num-col">Qty</th><th class="num-col">Labor</th></tr></thead>
       <tbody>
         ${inv.items.map(li=>`
           <tr>
-            <td>${escapeHtml(li.desc)}</td>
+            <td>${li.photo ? `<img src="${li.photo}" style="width:64px;height:64px;object-fit:cover;border-radius:4px;">` : ""}</td>
             <td class="num-col">${li.color || '—'}</td>
             <td class="num-col">${li.qty}</td>
             <td class="num-col">${li.labor != null ? fmtMoney(li.labor) : '—'}</td>
