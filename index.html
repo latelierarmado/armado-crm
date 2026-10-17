@@ -234,36 +234,36 @@
     .stat-grid{ grid-template-columns:1fr 1fr; }
   }
   @media print{
-    @page{ size: 148mm 100mm; margin: 6mm; }
+    @page{ size: 100mm 148mm; margin: 6mm; }
     .sidebar, .no-print{ display:none !important; }
     html, body{ height:auto !important; overflow:visible !important; margin:0 !important; }
     body > *:not(.overlay){ display:none !important; }
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; max-height:88mm; overflow:hidden; }
+    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; max-height:136mm; overflow:hidden; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
       border:none; border-radius:0; padding:0; max-width:none; width:100%;
     }
-    .invoice-doc-head{ flex-direction:row; justify-content:space-between; gap:8px; margin-bottom:10px; }
+    .invoice-doc-head{ flex-direction:column; gap:8px; margin-bottom:12px; }
     .invoice-doc-head > div:first-child{ gap:8px; }
-    .invoice-doc h1{ font-size:16px; margin:0 0 2px; }
-    .invoice-biz{ font-size:9px; line-height:1.35; }
-    .invoice-meta{ text-align:left; font-size:9px; }
-    .invoice-meta .num{ font-size:11px; }
-    .invoice-logo{ width:28px !important; height:24px !important; }
-    .invoice-parties{ margin-bottom:12px; font-size:9px; }
-    .invoice-parties .label{ font-size:8px; margin-bottom:3px; }
-    .invoice-doc table{ font-size:8.5px; }
-    .invoice-doc th{ padding:4px 3px; font-size:8px; }
-    .invoice-doc td{ padding:4px 3px; font-size:8.5px; }
-    .invoice-doc td[colspan]{ font-size:8.5px !important; }
+    .invoice-doc h1{ font-size:20px; margin:0 0 2px; }
+    .invoice-biz{ font-size:11px; line-height:1.35; }
+    .invoice-meta{ text-align:left; font-size:11px; }
+    .invoice-meta .num{ font-size:14px; }
+    .invoice-logo{ width:36px !important; height:31px !important; }
+    .invoice-parties{ margin-bottom:12px; font-size:11px; }
+    .invoice-parties .label{ font-size:9px; margin-bottom:3px; }
+    .invoice-doc table{ font-size:11px; }
+    .invoice-doc th{ padding:5px 3px; font-size:9.5px; }
+    .invoice-doc td{ padding:5px 3px; font-size:11px; }
+    .invoice-doc td[colspan]{ font-size:10.5px !important; }
     .totals-box{ margin-top:8px; padding-top:6px; }
-    .totals-row{ font-size:9px; padding:2px 0; }
-    .totals-row.grand{ font-size:11px; }
-    .doc-watermark{ width:55%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .totals-row{ font-size:11px; padding:2px 0; }
+    .totals-row.grand{ font-size:15px; }
+    .doc-watermark{ width:70%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .tag{ font-size:8px; padding:1px 6px; }
   }
 </style>
@@ -537,7 +537,7 @@
   <div class="modal modal-wide" style="max-width:560px; background:var(--paper);">
     <div class="no-print" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px;">
       <button class="btn-ghost btn" onclick="closeModal('receipt-view-overlay')">Close</button>
-      <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
+      <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
         <button class="btn" onclick="window.print()">Print / save as PDF</button>
     </div>
     <div class="invoice-doc" id="receipt-doc" style="max-width:none;"></div>
@@ -553,7 +553,7 @@
       </div>
       <div style="display:flex; gap:8px; align-items:flex-end;">
         <button class="btn-ghost btn" onclick="closeModal('invoice-view-overlay')">Close</button>
-        <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
+        <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
         <button class="btn" onclick="window.print()">Print / save as PDF</button>
       </div>
     </div>
@@ -1881,15 +1881,15 @@ checkLockState();
 
 const PRINT_SIZES={ 'hagaki':['148mm 100mm',88],'hagaki-p':['100mm 148mm',136],'a6':['148mm 105mm',93],'a6-p':['105mm 148mm',136],'a5':['210mm 148mm',136] };
 function setPrintSize(v){
-  if(!PRINT_SIZES[v]) v='hagaki';
+  if(!PRINT_SIZES[v]) v='hagaki-p';
   let st=document.getElementById('print-size-style');
   if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
   const [size,h]=PRINT_SIZES[v];
   st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } .invoice-doc{ max-height:'+h+'mm !important; } }';
   document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
-  try{ localStorage.setItem('crm-print-size',v); }catch(e){}
+  try{ localStorage.setItem('crm-print-size-v2',v); }catch(e){}
 }
-(function(){ let v='hagaki'; try{ v=localStorage.getItem('crm-print-size')||'hagaki'; }catch(e){} setPrintSize(v); })();
+(function(){ let v='hagaki-p'; try{ v=localStorage.getItem('crm-print-size-v2')||'hagaki-p'; }catch(e){} setPrintSize(v); })();
 </script>
 </body>
 </html>
