@@ -241,32 +241,32 @@
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ overflow:hidden; page-break-inside:avoid; break-inside:avoid; zoom:1.2; }
+    .invoice-doc{ overflow:hidden; page-break-inside:avoid; break-inside:avoid; zoom:1.4; }
     .invoice-doc *{ page-break-before:avoid !important; break-before:avoid !important; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
       border:none; border-radius:0; padding:0; max-width:none; width:100%;
     }
-    .invoice-doc-head{ flex-direction:column; gap:8px; margin-bottom:12px; }
+    .invoice-doc-head{ flex-direction:column; gap:6px; margin-bottom:8px; }
     .invoice-doc-head > div:first-child{ gap:8px; }
     .invoice-doc h1{ font-size:25px; margin:0 0 2px; }
     .invoice-biz{ font-size:13px; line-height:1.35; }
     .invoice-meta{ text-align:left; font-size:13px; }
     .invoice-meta .num{ font-size:17px; }
     .invoice-logo{ width:46px !important; height:40px !important; }
-    .invoice-parties{ margin-bottom:16px; font-size:14px; }
+    .invoice-parties{ margin-bottom:8px; font-size:14px; }
     .invoice-parties .label{ font-size:10.5px; margin-bottom:3px; }
     .invoice-doc table{ font-size:13.5px; }
     .invoice-doc th{ padding:7px 4px; font-size:11px; }
-    .invoice-doc td{ padding:8px 4px; font-size:13.5px; }
-    .invoice-doc td[colspan]{ font-size:12.5px !important; }
+    .invoice-doc td{ padding:5px 4px; font-size:13.5px; }
+    .invoice-doc td[colspan]{ font-size:11.5px !important; }
     .totals-box{ margin-top:10px !important; padding:10px 0 4px; }
     .totals-row{ font-size:14px; padding:2px 0; }
     .totals-row.grand{ font-size:20px; }
     .doc-watermark{ width:70%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .tag{ font-size:8px; padding:1px 6px; }
-    .invoice-doc td img{ width:80px !important; height:80px !important; }
+    .invoice-doc td img{ width:46px !important; height:46px !important; }
   }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -314,7 +314,7 @@
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="changePin()">Change PIN</button>
       <button class="btn-ghost btn btn-sm" id="drive-connect-btn" style="color:var(--paper); border-color:#6B4444;" onclick="connectDrive()">Connect Google Drive</button>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444; font-size:10.5px;" onclick="disconnectDrive()">Forget Drive connection</button>
-      <p style="font-size:10px; color:#8C8E7E; margin:10px 0 0 2px;">Version: print-v8 (Oct 17)</p>
+      <p style="font-size:10px; color:#8C8E7E; margin:10px 0 0 2px;">Version: print-v9 (Oct 17)</p>
       <p id="drive-status" style="font-size:10.5px; color:#C9CABB; margin:2px 0 0 2px;">Not connected</p>
     </div>
   </div>
@@ -1883,7 +1883,7 @@ async function changePin(){
 checkLockState();
 
 const PRINT_SIZES={ 'hagaki':['148mm 100mm',80,1],'hagaki-p':['100mm 148mm',130,0],'a6':['148mm 105mm',85,1],'a6-p':['105mm 148mm',130,0],'a5':['210mm 148mm',128,1] };
-const LAND_CSS=' .invoice-doc-head{ flex-direction:row !important; justify-content:space-between; margin-bottom:8px !important; } .invoice-meta{ text-align:right !important; } .invoice-doc h1{ font-size:21px !important; } .invoice-parties{ margin-bottom:8px !important; font-size:12px !important; } .invoice-doc table{ font-size:12px !important; } .invoice-doc th{ padding:4px 4px !important; font-size:9.5px !important; } .invoice-doc td{ padding:4px 4px !important; font-size:12px !important; } .invoice-doc td[colspan]{ font-size:11px !important; } .invoice-doc td img{ width:54px !important; height:54px !important; } .totals-row.grand{ font-size:17px !important; } .totals-box{ padding:6px 0 2px !important; }';
+const LAND_CSS=' .invoice-doc-head{ flex-direction:row !important; justify-content:space-between; margin-bottom:4px !important; } .invoice-meta{ text-align:right !important; } .invoice-doc h1{ font-size:21px !important; } .invoice-parties{ margin-bottom:4px !important; font-size:12px !important; } .invoice-doc table{ font-size:12px !important; } .invoice-doc th{ padding:3px 4px !important; font-size:9.5px !important; } .invoice-doc td{ padding:3px 4px !important; font-size:12px !important; } .invoice-doc td[colspan]{ font-size:11px !important; } .invoice-doc td img{ width:42px !important; height:42px !important; } .totals-row.grand{ font-size:17px !important; } .totals-box{ margin-top:4px !important; padding:4px 0 0 !important; }';
 function setPrintSize(v){
   if(!PRINT_SIZES[v]) v='hagaki';
   let st=document.getElementById('print-size-style');
