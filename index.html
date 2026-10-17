@@ -241,8 +241,7 @@
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ display:flex !important; flex-direction:column; overflow:hidden; }
-    .invoice-doc table{ flex:0 0 auto; }
+    .invoice-doc{ overflow:hidden; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
@@ -261,7 +260,7 @@
     .invoice-doc th{ padding:7px 4px; font-size:11px; }
     .invoice-doc td{ padding:8px 4px; font-size:13.5px; }
     .invoice-doc td[colspan]{ font-size:12.5px !important; }
-    .totals-box{ margin-top:auto !important; padding:10px 0 4px; }
+    .totals-box{ margin-top:10px !important; padding:10px 0 4px; }
     .totals-row{ font-size:14px; padding:2px 0; }
     .totals-row.grand{ font-size:20px; }
     .doc-watermark{ width:70%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -1888,7 +1887,7 @@ function setPrintSize(v){
   let st=document.getElementById('print-size-style');
   if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
   const [size,h,land]=PRINT_SIZES[v];
-  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } .invoice-doc{ min-height:'+h+'mm; }'+(land?LAND_CSS:'')+' }';
+  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } '+(land?LAND_CSS:'')+' }';
   document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
   try{ localStorage.setItem('crm-print-size-v3',v); }catch(e){}
 }
