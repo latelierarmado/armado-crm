@@ -241,7 +241,8 @@
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ overflow:hidden; }
+    .invoice-doc{ overflow:hidden; page-break-inside:avoid; break-inside:avoid; }
+    .invoice-doc *{ page-break-before:avoid !important; break-before:avoid !important; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
@@ -313,6 +314,7 @@
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="changePin()">Change PIN</button>
       <button class="btn-ghost btn btn-sm" id="drive-connect-btn" style="color:var(--paper); border-color:#6B4444;" onclick="connectDrive()">Connect Google Drive</button>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444; font-size:10.5px;" onclick="disconnectDrive()">Forget Drive connection</button>
+      <p style="font-size:10px; color:#8C8E7E; margin:10px 0 0 2px;">Version: print-v7 (Oct 17)</p>
       <p id="drive-status" style="font-size:10.5px; color:#C9CABB; margin:2px 0 0 2px;">Not connected</p>
     </div>
   </div>
