@@ -314,7 +314,7 @@
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444;" onclick="changePin()">Change PIN</button>
       <button class="btn-ghost btn btn-sm" id="drive-connect-btn" style="color:var(--paper); border-color:#6B4444;" onclick="connectDrive()">Connect Google Drive</button>
       <button class="btn-ghost btn btn-sm" style="color:var(--paper); border-color:#6B4444; font-size:10.5px;" onclick="disconnectDrive()">Forget Drive connection</button>
-      <p style="font-size:10px; color:#8C8E7E; margin:10px 0 0 2px;">Version: print-v9 (Oct 17)</p>
+      <p style="font-size:10px; color:#8C8E7E; margin:10px 0 0 2px;">Version: print-v10 (Oct 17)</p>
       <p id="drive-status" style="font-size:10.5px; color:#C9CABB; margin:2px 0 0 2px;">Not connected</p>
     </div>
   </div>
@@ -1889,7 +1889,7 @@ function setPrintSize(v){
   let st=document.getElementById('print-size-style');
   if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
   const [size,h,land]=PRINT_SIZES[v];
-  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } '+(land?LAND_CSS:'')+' }';
+  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } .invoice-doc{ zoom:'+(land?1.4:1.5)+'; } '+(land?LAND_CSS:'')+' }';
   document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
   try{ localStorage.setItem('crm-print-size-v3',v); }catch(e){}
 }
