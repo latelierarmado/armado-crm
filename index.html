@@ -266,6 +266,19 @@
     .doc-watermark{ width:70%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .tag{ font-size:8px; padding:1px 6px; }
     .invoice-doc td img{ width:80px !important; height:80px !important; }
+    @media (orientation:landscape){
+      .invoice-doc-head{ flex-direction:row !important; justify-content:space-between; margin-bottom:8px !important; }
+      .invoice-meta{ text-align:right !important; }
+      .invoice-doc h1{ font-size:21px !important; }
+      .invoice-parties{ margin-bottom:8px !important; font-size:12px !important; }
+      .invoice-doc table{ font-size:12px !important; }
+      .invoice-doc th{ padding:4px 4px !important; font-size:9.5px !important; }
+      .invoice-doc td{ padding:4px 4px !important; font-size:12px !important; }
+      .invoice-doc td[colspan]{ font-size:11px !important; }
+      .invoice-doc td img{ width:54px !important; height:54px !important; }
+      .totals-row.grand{ font-size:17px !important; }
+      .totals-box{ padding:6px 0 2px !important; }
+    }
   }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -538,7 +551,7 @@
   <div class="modal modal-wide" style="max-width:560px; background:var(--paper);">
     <div class="no-print" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px;">
       <button class="btn-ghost btn" onclick="closeModal('receipt-view-overlay')">Close</button>
-      <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
+      <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
         <button class="btn" onclick="window.print()">Print / save as PDF</button>
     </div>
     <div class="invoice-doc" id="receipt-doc" style="max-width:none;"></div>
@@ -554,7 +567,7 @@
       </div>
       <div style="display:flex; gap:8px; align-items:flex-end;">
         <button class="btn-ghost btn" onclick="closeModal('invoice-view-overlay')">Close</button>
-        <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
+        <select class="print-size-select" onchange="setPrintSize(this.value)" title="Paper size" style="min-height:0; padding:8px 10px; font-size:13px;"><option value="hagaki">Hagaki 148×100 (landscape)</option><option value="hagaki-p">Hagaki 100×148 (portrait)</option><option value="a6">A6 landscape</option><option value="a6-p">A6 portrait</option><option value="a5">A5 landscape</option></select>
         <button class="btn" onclick="window.print()">Print / save as PDF</button>
       </div>
     </div>
@@ -1882,15 +1895,15 @@ checkLockState();
 
 const PRINT_SIZES={ 'hagaki':['148mm 100mm',88],'hagaki-p':['100mm 148mm',136],'a6':['148mm 105mm',93],'a6-p':['105mm 148mm',136],'a5':['210mm 148mm',136] };
 function setPrintSize(v){
-  if(!PRINT_SIZES[v]) v='hagaki-p';
+  if(!PRINT_SIZES[v]) v='hagaki';
   let st=document.getElementById('print-size-style');
   if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
   const [size,h]=PRINT_SIZES[v];
   st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } }';
   document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
-  try{ localStorage.setItem('crm-print-size-v2',v); }catch(e){}
+  try{ localStorage.setItem('crm-print-size-v3',v); }catch(e){}
 }
-(function(){ let v='hagaki-p'; try{ v=localStorage.getItem('crm-print-size-v2')||'hagaki-p'; }catch(e){} setPrintSize(v); })();
+(function(){ let v='hagaki'; try{ v=localStorage.getItem('crm-print-size-v3')||'hagaki'; }catch(e){} setPrintSize(v); })();
 </script>
 </body>
 </html>
