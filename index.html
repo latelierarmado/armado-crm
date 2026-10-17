@@ -241,7 +241,8 @@
     .overlay:not(.show){ display:none !important; }
     .overlay.show{ position:static !important; display:block !important; background:none !important; padding:0 !important; overflow:visible !important; }
     .overlay.show .modal{ box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; max-height:none !important; overflow:visible !important; background:#fff !important; }
-    .invoice-doc{ page-break-inside:avoid; break-inside:avoid; page-break-after:avoid; display:flex !important; flex-direction:column; position:relative; height:calc(100vh - 2mm); max-height:calc(100vh - 2mm); overflow:hidden; }
+    .invoice-doc{ display:flex !important; flex-direction:column; overflow:hidden; }
+    .invoice-doc table{ flex:0 0 auto; }
     .main{ padding:0 !important; max-width:none !important; }
     body{ background:#fff; font-size:10px; }
     .invoice-doc{
@@ -260,25 +261,12 @@
     .invoice-doc th{ padding:7px 4px; font-size:11px; }
     .invoice-doc td{ padding:8px 4px; font-size:13.5px; }
     .invoice-doc td[colspan]{ font-size:12.5px !important; }
-    .totals-box{ position:absolute !important; left:0; right:0; bottom:0; margin:0 !important; padding:10px 0 4px; background:#fff; z-index:3; }
+    .totals-box{ margin-top:auto !important; padding:10px 0 4px; }
     .totals-row{ font-size:14px; padding:2px 0; }
     .totals-row.grand{ font-size:20px; }
     .doc-watermark{ width:70%; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .tag{ font-size:8px; padding:1px 6px; }
     .invoice-doc td img{ width:80px !important; height:80px !important; }
-    @media (orientation:landscape){
-      .invoice-doc-head{ flex-direction:row !important; justify-content:space-between; margin-bottom:8px !important; }
-      .invoice-meta{ text-align:right !important; }
-      .invoice-doc h1{ font-size:21px !important; }
-      .invoice-parties{ margin-bottom:8px !important; font-size:12px !important; }
-      .invoice-doc table{ font-size:12px !important; }
-      .invoice-doc th{ padding:4px 4px !important; font-size:9.5px !important; }
-      .invoice-doc td{ padding:4px 4px !important; font-size:12px !important; }
-      .invoice-doc td[colspan]{ font-size:11px !important; }
-      .invoice-doc td img{ width:54px !important; height:54px !important; }
-      .totals-row.grand{ font-size:17px !important; }
-      .totals-box{ padding:6px 0 2px !important; }
-    }
   }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1893,13 +1881,14 @@ async function changePin(){
 
 checkLockState();
 
-const PRINT_SIZES={ 'hagaki':['148mm 100mm',88],'hagaki-p':['100mm 148mm',136],'a6':['148mm 105mm',93],'a6-p':['105mm 148mm',136],'a5':['210mm 148mm',136] };
+const PRINT_SIZES={ 'hagaki':['148mm 100mm',80,1],'hagaki-p':['100mm 148mm',130,0],'a6':['148mm 105mm',85,1],'a6-p':['105mm 148mm',130,0],'a5':['210mm 148mm',128,1] };
+const LAND_CSS=' .invoice-doc-head{ flex-direction:row !important; justify-content:space-between; margin-bottom:8px !important; } .invoice-meta{ text-align:right !important; } .invoice-doc h1{ font-size:21px !important; } .invoice-parties{ margin-bottom:8px !important; font-size:12px !important; } .invoice-doc table{ font-size:12px !important; } .invoice-doc th{ padding:4px 4px !important; font-size:9.5px !important; } .invoice-doc td{ padding:4px 4px !important; font-size:12px !important; } .invoice-doc td[colspan]{ font-size:11px !important; } .invoice-doc td img{ width:54px !important; height:54px !important; } .totals-row.grand{ font-size:17px !important; } .totals-box{ padding:6px 0 2px !important; }';
 function setPrintSize(v){
   if(!PRINT_SIZES[v]) v='hagaki';
   let st=document.getElementById('print-size-style');
   if(!st){ st=document.createElement('style'); st.id='print-size-style'; document.head.appendChild(st); }
-  const [size,h]=PRINT_SIZES[v];
-  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } }';
+  const [size,h,land]=PRINT_SIZES[v];
+  st.textContent='@media print{ @page{ size:'+size+'; margin:6mm; } .invoice-doc{ min-height:'+h+'mm; }'+(land?LAND_CSS:'')+' }';
   document.querySelectorAll('.print-size-select').forEach(e=>e.value=v);
   try{ localStorage.setItem('crm-print-size-v3',v); }catch(e){}
 }
